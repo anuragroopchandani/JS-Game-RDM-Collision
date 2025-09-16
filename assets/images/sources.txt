@@ -1,0 +1,7 @@
+Art Assets (Kenney.nl, CC0 1.0 Universal Public Domain):
+
+– playerShip1_green.png
+– ufoRed.png
+
+Source pack: Space Shooter Redux  
+Link: https://kenney.nl/assets/space-shooter-redux

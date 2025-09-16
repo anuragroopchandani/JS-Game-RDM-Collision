@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CDN Smoke Test (Fixed)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{margin:0;font:14px/1.4 system-ui,Segoe UI,Roboto,sans-serif;background:#0b1e2d;color:#e8ecff}
+    #bg{position:fixed;inset:0;z-index:0}
+    .panel{position:relative;z-index:1;max-width:860px;margin:20px auto;padding:16px;border-radius:12px;
+      background:rgba(17,23,40,.55);border:1px solid rgba(120,140,200,.25)}
+    .row{display:flex;flex-wrap:wrap;gap:10px}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#2b3355;border:1px solid rgba(100,130,190,.35)}
+    .ok{color:#b3ffb3}.fail{color:#ffb3b3}
+    #gsapBox{width:12px;height:12px;background:#9cf;border-radius:3px;display:inline-block}
+    #kontraCanvas,#tweakpaneRoot{display:none}
+  </style>
+</head>
+<body>
+  <div id="bg" aria-hidden="true"></div>
+
+  <div class="panel">
+    <h1 style="margin:0 0 10px">CDN Library Smoke Test</h1>
+    <div class="row" id="statusRow"></div>
+    <p style="opacity:.85;margin-top:12px">
+      All badges should be ✅. If any are ❌, check DevTools → Network for 404/blocked requests.
+    </p>
+    <div style="margin-top:8px">GSAP test box: <span id="gsapBox"></span></div>
+  </div>
+
+  <canvas id="kontraCanvas" width="32" height="32"></canvas>
+  <div id="tweakpaneRoot"></div>
+
+  <!-- ✅ Three.js + Vanta -->
+  <script defer src="vendor/three/r134/three.r134.min.js"></script>
+
+  <script defer src="vendor/vanta/0.5.24/vanta.waves.min.js"></script>
+
+  <!-- SAT.js (collision) -->
+  <script defer src="vendor/sat/0.9.0/SAT.js"></script>
+
+  <!-- GSAP (FX) -->
+  <script defer src="vendor/gsap/3.12.5/gsap.min.js"></script>
+
+  <!-- Howler (audio) -->
+  <script defer src="vendor/howler/2.24/howler.min.js"></script>
+
+  <!-- Tweakpane (dev sliders) -->
+  <script defer src="vendor/tweakpane/3.1.10/tweakpane.min.js"></script>
+
+  <!-- ✅ Kontra UMD -->
+<!-- replace your existing Kontra script with one of these -->
+<script defer src="vendor/kontra/9.0.0/kontra.min.js"></script>
+
+  <script>
+    window.addEventListener('load', () => {
+      const statusRow = document.getElementById('statusRow');
+      const badge = (name, ok, msg='') => {
+        const el = document.createElement('div');
+        el.className = 'badge ' + (ok ? 'ok' : 'fail');
+        el.textContent = `${ok ? '✅' : '❌'} ${name}${msg ? ' — ' + msg : ''}`;
+        statusRow.appendChild(el);
+      };
+
+      // Vanta
+      try{
+        if (window.THREE && window.VANTA?.WAVES) {
+          const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (!reduce) window.__vanta = VANTA.WAVES({ el:'#bg', mouseControls:false, touchControls:false, gyroControls:false });
+          badge('Vanta.js', true, reduce ? 'skipped (reduced motion)' : 'initialized');
+        } else badge('Vanta.js', false, 'globals missing');
+      }catch(e){ badge('Vanta.js', false, e.message); }
+
+      // SAT.js
+      try{
+        if (window.SAT?.Box && window.SAT?.Vector) {
+          const a = new SAT.Box(new SAT.Vector(0,0),10,10).toPolygon();
+          const b = new SAT.Box(new SAT.Vector(6,6),10,10).toPolygon();
+          badge('SAT.js', true, SAT.testPolygonPolygon(a,b) ? 'collision OK' : 'no collision');
+        } else badge('SAT.js', false, 'globals missing');
+      }catch(e){ badge('SAT.js', false, e.message); }
+
+      // GSAP
+      try{
+        if (window.gsap?.to) {
+          gsap.to('#gsapBox', { duration:0.2, x:12 });
+          badge('GSAP', true, 'tween OK');
+        } else badge('GSAP', false, 'globals missing');
+      }catch(e){ badge('GSAP', false, e.message); }
+
+      // Howler
+      try{
+        if (window.Howler && window.Howl) { Howler.mute(true); badge('Howler.js', true, 'API OK'); }
+        else badge('Howler.js', false, 'globals missing');
+      }catch(e){ badge('Howler.js', false, e.message); }
+
+      // Tweakpane (handle both globals + both APIs)
+      try{
+        const TP = (window.Tweakpane && window.Tweakpane.Pane) ? window.Tweakpane :
+                   (window.tp && window.tp.Pane ? window.tp : null);
+        if (TP) {
+          const pane = new TP.Pane({ container: document.getElementById('tweakpaneRoot') });
+          const model = { speed: 1 };
+          if (typeof pane.addBinding === 'function') pane.addBinding(model, 'speed', { min:0.5, max:2, step:0.1 });
+          else if (typeof pane.addInput === 'function') pane.addInput(model, 'speed', { min:0.5, max:2, step:0.1 });
+          badge('Tweakpane', true, 'pane OK');
+        } else badge('Tweakpane', false, 'globals missing');
+      }catch(e){ badge('Tweakpane', false, e.message); }
+
+      // Kontra
+      try{
+        if (window.kontra?.init) {
+          const { canvas, context } = kontra.init('kontraCanvas');
+          badge('Kontra.js', true, (canvas && context) ? 'init OK' : 'init ?');
+        } else badge('Kontra.js', false, 'globals missing');
+      }catch(e){ badge('Kontra.js', false, e.message); }
+
+      window.addEventListener('beforeunload', () => { try{ __vanta?.destroy?.(); }catch(_){} });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+/* ===== Theme tokens ===== */
+:root{
+  --bg:#0b1e2d;
+  --panel:rgba(17,23,40,.25);
+  --border:rgba(120,140,200,.22);
+  --text:#e8ecff;
+
+  --padY:20px;                        /* body vertical padding */
+  --hudH:48px; --hudPadY:6px; --hudPadX:8px; --hudGap:8px;
+  --btnH:36px; --btnPX:12px; --btnRadius:10px; --hudFont:.95rem;
+
+  --neon:#ff33cc;                     /* neon accent for cyber vibe */
+}
+
+/* Portrait tweaks (tighter bar + smaller buttons) */
+@media (orientation:portrait){
+  :root{
+    --padY:10px; --hudH:36px; --hudPadY:4px; --hudPadX:6px; --hudGap:6px;
+    --btnH:30px; --btnPX:10px; --hudFont:.88rem;
+  }
+}
+
+/* Touch comfort on phones/tablets */
+@media (orientation:portrait) and (pointer:coarse){
+  :root{ --hudH:38px; --btnH:32px; --hudFont:.92rem; }
+}
+
+/* ===== Page base ===== */
+html, body { height: 100svh; }
+body{
+  margin:0;
+  color:var(--text);
+  font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,sans-serif;
+  background: radial-gradient(1200px 600px at 50% -20%, #1a223a 0%, var(--bg) 55%);
+  padding-block: var(--padY);
+  overflow:hidden;
+  box-sizing:border-box;
+}
+
+/* ===== Vanta background (always covers) ===== */
+#bg, #bg>canvas, #bg>div{
+  position:fixed; inset:0;
+  width:100vw; height:100svh !important;
+  display:block;
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ===== Layout wrappers ===== */
+.frame{
+  width:min(1440px,96vw);
+  height:calc(100svh - (var(--padY)*2));
+  margin:0 auto;
+  position:relative;
+  z-index:1;
+}
+
+.pane{ height:100%; display:flex; flex-direction:column; gap:5px; }
+
+/* ===== HUD ===== */
+.hud{
+  display:flex; align-items:center; gap:var(--hudGap);
+  min-height:var(--hudH);
+  padding:var(--hudPadY) var(--hudPadX);
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+.hud-left{ display:flex; gap:8px; }
+.hud-center{ margin-left:auto; }
+
+/* Unused controls for now */
+.hud-right{ display:none; }
+#btnPause{ display:none; }
+#uiState, #uiMode{ display:none; }
+
+/* ===== Buttons ===== */
+.btn{
+  height:var(--btnH);
+  padding:0 var(--btnPX);
+  font-size:var(--hudFont);
+  border-radius:var(--btnRadius);
+  border:1px solid rgba(120,140,200,.28);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  transition:transform .12s ease, background .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.btn:hover{ background:rgba(255,255,255,.09); }
+.btn:active{ transform:translateY(1px); }
+.btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* Accessible focus (neon) */
+.btn:focus-visible{
+  outline:2px solid var(--neon);
+  outline-offset:2px;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--neon) 35%, transparent);
+}
+
+/* Neon variant (apply class="btn btn--neon") */
+.btn--neon{
+  border:2px solid var(--neon);
+  background:transparent;
+  color:#fff;
+  box-shadow:0 0 10px var(--neon), 0 0 20px var(--neon) inset;
+}
+.btn--neon:hover{
+  background:rgba(255,51,204,.2); /* fallback to avoid color-mix support issues */
+  box-shadow:0 0 15px var(--neon), 0 0 30px var(--neon) inset;
+}
+
+/* ===== Score pill ===== */
+#uiScore{
+  height:var(--btnH);
+  padding:0 calc(var(--btnPX) + 2px);
+  font-size:var(--hudFont);
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(120,140,200,.28);
+  white-space:nowrap;
+  font-weight:600;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+#uiScore em{ opacity:.75; font-style:normal; }
+
+/* ===== Stage (game container) ===== */
+#gameStage{
+  position:relative;
+  flex:1 1 auto;
+  min-height:160px;
+  overflow:hidden;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  backdrop-filter:blur(1px);
+  -webkit-backdrop-filter:blur(1px);
+}
+
+/* ===== Canvas fills stage ===== */
+canvas{
+  background:transparent;
+  width:100%;
+  height:100%;
+  display:block;
+  outline:none;
+}
+
+/* ===== Fallback when backdrop-filter is unsupported ===== */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  .hud, #gameStage{ background: rgba(17,23,40,.55); }
+}
