@@ -1,0 +1,3 @@
+GSAP is provided under GreenSock’s Standard “No Charge” License.
+Full text: https://gsap.com/standard-license
+Copyright © GreenSock.
