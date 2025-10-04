@@ -71,6 +71,36 @@ body{
 .hud-left{ display:flex; gap:8px; }
 .hud-center{ margin-left:auto; }
 
+
+.hud__center{
+  display:flex; 
+  gap:8px;
+  margin:0 auto;               
+}
+
+
+.hud{ position: relative; }            
+.hud__center{
+  position: absolute;                  
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;                          
+}
+
+/* Hide BG picker on mobile/narrow screens */
+@media (max-width: 900px), (pointer:coarse) {
+  #bgPicker { display: none; }
+}
+
+
+/* Visual highlight for the selected background */
+#bgPicker .btn.is-active{
+  border:2px solid var(--neon);
+  box-shadow:0 0 10px var(--neon), 0 0 20px var(--neon) inset;
+}
+
+
+
 /* Unused controls for now */
 .hud-right{ display:none; }
 #btnPause{ display:none; }

@@ -73,40 +73,132 @@
   }
 
   // ===== Optional Vanta background
+  // ===== Vanta background (switchable)
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let vanta = null;
-  function createBG() {
-    if (
-      !CONFIG.FEATURES?.BG ||
-      reduceMotion.matches ||
-      vanta ||
-      !window.VANTA ||
-      !VANTA.FOG
-    )
-      return;
-    VANTA.FOG({
-      el: "#bg",
-      highlightColor: 0xff33cc, // neon pink
-      midtoneColor: 0x000000, // deep black
-      lowlightColor: 0x000000,
-      baseColor: 0x000000,
-      blurFactor: 0.65,
-      speed: 3,
-      zoom: 1.25,
+  let currentBG = "fog"; // default
+
+  const VANTA_MAP = {
+    fog: () => window.VANTA?.FOG,
+    birds: () => window.VANTA?.BIRDS,
+    cells: () => window.VANTA?.CELLS,
+    waves: () => window.VANTA?.WAVES,
+  };
+
+  const BASE_OPTS = {
+    el: "#bg",
+    highlightColor: 0xff33cc,
+    midtoneColor: 0x000000,
+    lowlightColor: 0x000000,
+    baseColor: 0x000000,
+  };
+
+  function createBG(type = currentBG) {
+    if (!CONFIG.FEATURES?.BG || reduceMotion.matches || vanta) return;
+    const ctor = VANTA_MAP[type]?.();
+    if (!ctor) return;
+
+    const opts = { ...BASE_OPTS };
+    if (type === "fog")
+      Object.assign(opts, { blurFactor: 0.65, speed: 3, zoom: 1.25 });
+    if (type === "birds")
+      Object.assign(opts, {
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.0,
+        minWidth: 200.0,
+        scale: 1.0,
+        scaleMobile: 1.0,
+        backgroundColor: 0x8142a,
+        color2: 0x41ff,
+        colorMode: "variance",
+        wingSpan: 19.0,
+        speedLimit: 2.0,
+        separation: 15.0,
+        alignment: 40.0,
+        cohesion: 27.0,
+        quantity: 3.0,
+      });
+    if (type === "cells") Object.assign(opts, {
+      mouseControls: true,
+      touchControls: true,
+      gyroControls: false,
+      minHeight: 200.0,
+      minWidth: 200.0,
+      scale: 1.0,
+      color1: 0x1a6464,
+      color2: 0x6f7f,
+      size: 0.9,
+      speed: 1.4,
     });
+    if (type === "waves")
+      Object.assign(opts, {
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.0,
+        minWidth: 200.0,
+        scale: 1.0,
+        scaleMobile: 1.0,
+        color: 0x660844,
+        shininess: 38.0,
+        waveHeight: 18.0,
+        waveSpeed: 1.35,
+        zoom: 0.76,
+      });
+
+    vanta = ctor(opts);
   }
+
   function destroyBG() {
     try {
       vanta?.destroy?.();
     } catch {}
     vanta = null;
   }
-  createBG();
+
+  
+  window.setBG = function (type) {
+    if (type === currentBG) return;
+    currentBG = type;
+    destroyBG();
+    createBG(type);
+
+    // toggle active button
+    const picker = document.getElementById("bgPicker");
+    if (picker) {
+      const btns = picker.querySelectorAll("button[data-bg]");
+      btns.forEach((b) => {
+        const active = b.dataset.bg === type;
+        b.classList.toggle("is-active", active);
+        b.classList.toggle("btn--neon", active);
+      });
+    }
+  };
+
+
+  // init once
+  createBG("fog");
+
+  // handle reduced-motion toggles at OS level
   reduceMotion.addEventListener?.("change", () => {
     destroyBG();
-    createBG();
+    if (!reduceMotion.matches) createBG(currentBG);
   });
   addEventListener("beforeunload", destroyBG);
+
+  // wire buttons (no change to your existing UI code)
+  addEventListener("DOMContentLoaded", () => {
+    const picker = document.getElementById("bgPicker");
+    if (picker) {
+      picker.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-bg]");
+        if (!btn) return;
+        window.setBG(btn.dataset.bg);
+      });
+    }
+  });
 
   // ===== Dashed glowing divider (lanes themselves remain transparent)
   function drawDivider(ctx) {
